@@ -1,7 +1,7 @@
 {
-  "name": "node-typescript-boilerplate",
+  "name": "family-signals",
   "version": "0.0.0",
-  "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
+  "description": "Integrate yeelight bulb with google calendar or slack status.",
   "type": "module",
   "engines": {
     "node": ">= 20.9 < 21"
@@ -33,8 +33,8 @@
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
-  "author": "Jakub Synowiec <jsynowiec@users.noreply.github.com>",
-  "license": "Apache-2.0",
+  "author": "Bartosz Dębicki <bartosz.debicki@zoin.pl>",
+  "license": "MIT License",
   "dependencies": {
     "tslib": "~2.6"
   },
