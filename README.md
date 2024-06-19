@@ -10,3 +10,6 @@ Integrate yeelight bulb with google calendar or slack status.
 - `prettier` - reformat files,
 - `test` - run tests,
 - `test:watch` - interactive watch mode to automatically re-run tests
+
+## How to start
+1. run `npm run auth:calendar` to generate necessary tokens and authorize app with Google
