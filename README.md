@@ -12,4 +12,13 @@ Integrate yeelight bulb with google calendar or slack status.
 - `test:watch` - interactive watch mode to automatically re-run tests
 
 ## How to start
-1. run `npm run auth:calendar` to generate necessary tokens and authorize app with Google
+0. copy .env.template to .env file
+1. fill out .env file by OAuth tokens:
+   - OAUTH_CLIENT_ID - client id
+   - OAUTH_CLIENT_SECRET - client secret
+   and yeelight ip:
+   - YEELIGHT_IP - yeelight bulb in your local network
+2. run `npm run auth:calendar` to generate necessary tokens and authorize app with Google
+3. fill out .env file by generated OAuth tokens:
+   - OAUTH_ACCESS_TOKEN - access_token
+   - OAUTH_REFRESH_TOKEN - refrest_token
