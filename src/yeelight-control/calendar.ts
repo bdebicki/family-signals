@@ -6,7 +6,7 @@ import {
   OAUTH_CLIENT_SECRET,
   OAUTH_REFRESH_TOKEN,
   OAUTH_YOUR_REDIRECT_URL,
-} from './constants/env.js'
+} from '../constants/env.js'
 
 const { OAuth2 } = google.auth
 

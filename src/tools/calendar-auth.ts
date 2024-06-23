@@ -1,13 +1,13 @@
 import express from 'express'
 import type { Request, Response } from 'express'
 import { Auth, google } from 'googleapis'
-import { authUrl } from './utils/oauth-clients.js'
+import { authUrl } from '../utils/oauth-clients.js'
 import { spawn } from 'node:child_process'
 import {
   OAUTH_CLIENT_ID,
   OAUTH_CLIENT_SECRET,
   OAUTH_YOUR_REDIRECT_URL,
-} from './constants/env.js'
+} from '../constants/env.js'
 
 const app = express()
 const port = 3000

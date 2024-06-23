@@ -22,7 +22,8 @@
     "typescript": "~5.4"
   },
   "scripts": {
-    "auth:calendar": "node --env-file=.env build/src/calendar-auth.js",
+    "tool:auth-calendar": "node --env-file=.env build/src/tools/calendar-auth.js",
+    "tool:name-bulb": "node --env-file=.env build/src/tools/name-bulb.js",
     "start": "node --env-file=.env build/src/main.js",
     "start:thebulb": "node --env-file=.env build/src/the-bulb.js",
     "clean": "rimraf coverage build tmp",
@@ -40,8 +41,9 @@
   "dependencies": {
     "express": "^4.19.2",
     "googleapis": "^140.0.0",
-    "readline": "^1.3.0",
-    "tslib": "~2.6"
+    "inquirer": "^9.2.23",
+    "tslib": "~2.6",
+    "yeelight2": "^1.3.9"
   },
   "volta": {
     "node": "20.12.2"
