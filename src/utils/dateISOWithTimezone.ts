@@ -3,7 +3,7 @@ export const dateISOWithTimezone = (date: Date) => {
 
   const year = date.getFullYear()
   const month = pad(date.getMonth() + 1)
-  const day = pad(date.getDay())
+  const day = pad(date.getDate())
 
   const hours = pad(date.getHours())
   const minutes = pad(date.getMinutes())

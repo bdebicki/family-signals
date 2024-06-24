@@ -17,7 +17,9 @@ export const manageSignals = async () => {
       return
     }
 
-    const hasEvent = await checkCalendarEvents()
+    const { isOngoing, title, startDate, endDate } = await checkCalendarEvents()
+
+    console.log({ isOngoing, title, startDate, endDate })
   } catch (error) {
     console.error('Something went wrong')
     console.error(error)

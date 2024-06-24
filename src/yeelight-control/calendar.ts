@@ -9,6 +9,14 @@ import {
 } from '../constants/env.js'
 import { dateISOWithTimezone } from '../utils/dateISOWithTimezone.js'
 
+type Event = {
+  start: { dateTime: string }
+  end: { dateTime: string }
+  status: 'confirmed' // 'rejected' | 'not accepted'
+  eventType: 'default' | 'outOfOffice'
+  summary: string
+}
+
 const { OAuth2 } = google.auth
 
 const oauth2Client: Auth.OAuth2Client = new OAuth2(
@@ -21,6 +29,7 @@ oauth2Client.setCredentials({
   refresh_token: OAUTH_REFRESH_TOKEN,
 })
 
+const minInMs = 60000
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
 
 export const checkCalendarEvents = async () => {
@@ -34,19 +43,28 @@ export const checkCalendarEvents = async () => {
       orderBy: 'startTime',
     })
 
-    const { start, end, status, eventType, summary } = res.data.items[0]
+    const {
+      start: { dateTime: startDate },
+      end: { dateTime: endDate },
+      status,
+      eventType,
+      summary: title,
+    } = res.data.items[0] as Event
 
-    // status === 'confirmed
-    // eventType === 'default'
+    const isOngoing =
+      status === 'confirmed' &&
+      eventType === 'default' &&
+      new Date(startDate).getTime() - minInMs < new Date(date).getTime() &&
+      new Date(endDate).getTime() + minInMs > new Date(date).getTime()
 
-    console.log({ date, start, end })
+    // console.log({ date, startDate, endDate, status, eventType, title })
 
-    return res.data.items[0]
+    return { isOngoing, title, startDate, endDate }
   } catch (error) {
     console.error('Error checking calendar events:', error)
   }
 
-  return false
+  return { isOngoing: false }
 }
 
 checkCalendarEvents()
