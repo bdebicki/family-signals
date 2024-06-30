@@ -3,7 +3,7 @@ import { throwMsg } from './throw-msg.js'
 
 export const getYeelights = async (): Promise<Array<unknown>> => {
   throwMsg('discovery bulbs', true)
-  return new Promise((resolve, reject) => {
+  return new Promise(function (resolve, reject) {
     const bulbs: Array<unknown> = []
 
     Yeelight.discover(function (bulb: unknown) {
@@ -12,6 +12,7 @@ export const getYeelights = async (): Promise<Array<unknown>> => {
       setTimeout(() => {
         if (bulbs.length > 0) {
           this.close()
+          bulbs.forEach((b) => b.exit())
           resolve(bulbs)
         } else {
           reject((error) =>

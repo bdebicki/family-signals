@@ -14,10 +14,12 @@ export const manageSignals = async () => {
     const bulbs: Array<unknown> = await getYeelights()
 
     const signalBulb = bulbs.find(({ name }) => name === YEELIGHT_BULB_NAME)
+    const isSignalBulbPowered = signalBulb.power === 'on'
 
     if (!signalBulb) {
       console.error(`The bulb with name ${YEELIGHT_BULB_NAME} not found`)
       console.error(`Check does it turned on`)
+      bulbs.forEach((b) => b.close())
 
       return
     }
@@ -28,10 +30,14 @@ export const manageSignals = async () => {
 
     if (isOngoing) {
       throwMsg(`ongoing meeting: ${title}`)
-      await signalBulb.set_power('on')
+      if (!isSignalBulbPowered) {
+        await signalBulb.set_power('on')
+      }
     } else {
-      throwMsg(`upcoming meeting: ${title} at ${startDate}`, true)
-      await signalBulb.set_power('off')
+      throwMsg(`upcoming meeting: "${title}" at ${startDate}`, true)
+      if (isSignalBulbPowered) {
+        await signalBulb.set_power('off')
+      }
     }
   } catch (error) {
     console.error('Something went wrong')
