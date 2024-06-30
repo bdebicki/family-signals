@@ -57,8 +57,6 @@ export const checkCalendarEvents = async () => {
       new Date(startDate).getTime() - minInMs < new Date(date).getTime() &&
       new Date(endDate).getTime() + minInMs > new Date(date).getTime()
 
-    // console.log({ date, startDate, endDate, status, eventType, title })
-
     return { isOngoing, title, startDate, endDate }
   } catch (error) {
     console.error('Error checking calendar events:', error)
@@ -66,5 +64,3 @@ export const checkCalendarEvents = async () => {
 
   return { isOngoing: false }
 }
-
-checkCalendarEvents()
