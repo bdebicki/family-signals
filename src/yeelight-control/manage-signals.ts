@@ -2,9 +2,13 @@ import { checkCalendarEvents } from './calendar.js'
 import { YEELIGHT_BULB_NAME } from '../constants/env.js'
 import { getYeelights } from '../utils/get-yeelights.js'
 import { throwMsg } from '../utils/throw-msg.js'
+import { padTime } from '../utils/patTime.js'
 
 export const manageSignals = async () => {
-  throwMsg('Manage signalisation')
+  const date = new Date()
+  throwMsg(
+    `[${padTime(date.getHours())}:${padTime(date.getMinutes())}:${padTime(date.getSeconds())}] Manage signalisation`
+  )
 
   try {
     const bulbs: Array<unknown> = await getYeelights()
@@ -20,16 +24,14 @@ export const manageSignals = async () => {
 
     throwMsg(`the ${YEELIGHT_BULB_NAME} has been found`, true)
 
-    const { isOngoing, title, startDate, endDate } = await checkCalendarEvents()
-
-    throwMsg(`upcoming meeting: ${title} at ${startDate}`, true)
+    const { isOngoing, title, startDate } = await checkCalendarEvents()
 
     if (isOngoing) {
       throwMsg(`ongoing meeting: ${title}`)
-      signalBulb.set_power('on')
+      await signalBulb.set_power('on')
     } else {
       throwMsg(`upcoming meeting: ${title} at ${startDate}`, true)
-      signalBulb.set_power('off')
+      await signalBulb.set_power('off')
     }
   } catch (error) {
     console.error('Something went wrong')

@@ -7,7 +7,7 @@ import {
   OAUTH_REFRESH_TOKEN,
   OAUTH_YOUR_REDIRECT_URL,
 } from '../constants/env.js'
-import { dateISOWithTimezone } from '../utils/dateISOWithTimezone.js'
+import { dateIsoWithTimezone } from '../utils/date-iso-with-timezone.js'
 
 type Event = {
   start: { dateTime: string }
@@ -34,7 +34,7 @@ const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
 
 export const checkCalendarEvents = async () => {
   try {
-    const date = dateISOWithTimezone(new Date())
+    const date = dateIsoWithTimezone(new Date())
     const res = await calendar.events.list({
       calendarId: 'primary',
       timeMin: date,
