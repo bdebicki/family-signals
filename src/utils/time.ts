@@ -1,6 +1,6 @@
 import { padTime } from './patTime.js'
 
-export const dateIsoWithTimezone = (date: Date) => {
+export const time = (date: Date) => {
   const year = date.getFullYear()
   const month = padTime(date.getMonth() + 1)
   const day = padTime(date.getDate())
@@ -16,4 +16,10 @@ export const dateIsoWithTimezone = (date: Date) => {
   const timezone = `${offsetDirection}${offsetHours}:${offsetMinutes}`
 
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${timezone}`
+}
+
+export const getTime = () => {
+  const date = new Date()
+
+  return `${padTime(date.getHours())}:${padTime(date.getMinutes())}:${padTime(date.getSeconds())}`
 }

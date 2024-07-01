@@ -10,17 +10,19 @@ export const getYeelights = async (): Promise<Array<unknown>> => {
       bulbs.push(bulb)
 
       setTimeout(() => {
+        this.close()
+
         if (bulbs.length > 0) {
-          this.close()
-          bulbs.forEach((b) => b.exit())
           resolve(bulbs)
         } else {
-          reject((error) =>
+          reject((error) => {
+            bulbs.forEach((b) => b.exit())
+
             throwMsg(
               `bulbs discovering has been failed because of an error:\n${error}`,
               true
             )
-          )
+          })
         }
       }, 5000)
     })
