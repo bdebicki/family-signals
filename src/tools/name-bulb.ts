@@ -1,9 +1,10 @@
 import { getYeelights } from '../utils/get-yeelights.js'
 import inquirer from 'inquirer'
+import type { Light } from '../types/yeelight.js'
 
 let bulbIp: string
 let bulbName: string
-let bulbs: Array<any>
+let bulbs: Array<Light>
 
 const questions = [
   {

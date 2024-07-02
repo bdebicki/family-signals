@@ -1,31 +1,33 @@
-import Yeelight from 'yeelight2'
+import type { Light } from '../types/yeelight.js'
 import { getYeelights } from '../utils/get-yeelights.js'
 import { YEELIGHT_BULB_NAME } from '../constants/env.js'
 import { throwMsg } from '../utils/throw-msg.js'
 import { getTime } from '../utils/time.js'
 import { checkCalendarEvents } from './calendar.js'
 
-let signalBulb
+let signalBulb: Light
 
 async function manageCalendar() {
   const { isOngoing, title, startDate } = await checkCalendarEvents()
 
-  if (isOngoing) {
-    throwMsg(`ongoing meeting: ${title}`, true)
-    await signalBulb.set_power('on')
+  if (!signalBulb) {
+    console.log('nie ma bulb szukam')
+    manageBulb()
   } else {
-    throwMsg(`upcoming meeting: "${title}" at ${startDate}`, true)
-    await signalBulb.set_power('off')
+    if (isOngoing) {
+      throwMsg(`ongoing meeting: ${title}`, true)
+      await signalBulb.set_power('on')
+    } else {
+      throwMsg(`upcoming meeting: "${title}" at ${startDate}`, true)
+      await signalBulb.set_power('off')
+    }
   }
-
   setTimeout(manageCalendar, 10000)
 }
 
-export async function manageSignals() {
-  throwMsg(`[${getTime()}] Manage signalisation`)
-
+async function manageBulb() {
   try {
-    const bulbs: Array<Yeelight> = await getYeelights()
+    const bulbs: Array<Light> = await getYeelights()
     signalBulb = bulbs.find(({ name }) => name === YEELIGHT_BULB_NAME)
 
     if (!signalBulb) {
@@ -37,10 +39,15 @@ export async function manageSignals() {
     }
 
     throwMsg(`the ${YEELIGHT_BULB_NAME} has been found`, true)
-
-    manageCalendar()
   } catch (error) {
     console.error('Something went wrong while discovering bulbs')
     console.error(error)
   }
+}
+
+export async function manageSignals() {
+  throwMsg(`[${getTime()}] Manage signalisation`)
+
+  manageBulb()
+  manageCalendar()
 }
