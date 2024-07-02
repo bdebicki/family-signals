@@ -25,7 +25,6 @@
     "tool:auth-calendar": "node --env-file=.env build/src/tools/calendar-auth.js",
     "tool:name-bulb": "node --env-file=.env build/src/tools/name-bulb.js",
     "start": "node --env-file=.env build/src/main.js",
-    "start:thebulb": "node --env-file=.env build/src/the-bulb.js",
     "clean": "rimraf coverage build tmp",
     "prebuild": "npm run lint",
     "build": "tsc -p tsconfig.json",
