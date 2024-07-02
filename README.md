@@ -22,3 +22,13 @@ Integrate yeelight bulb with google calendar or slack status.
 3. fill out .env file by generated OAuth tokens:
    - OAUTH_ACCESS_TOKEN - access_token
    - OAUTH_REFRESH_TOKEN - refrest_token
+4. run `npm run start` and start the script
+
+## Roadmap:
+- [ ] **1.0.0** - re-discover bulbs while bulb is turned off during calendar management
+- [ ] **2.0.0** - handle slack huddle
+- [ ] **2.1.0** - allow multiple google calendars
+- [ ] **2.2.0** - reconcile manual and automatic (huddle / calendar) toggle
+- [ ] **2.3.0** - add possibility to turn on/off bulb from iphone widget or try icon
+- [ ] **3.0.0** - handle script on load of system
+- [ ] **4.0.0** - allow multiple bulbs
