@@ -1,6 +1,7 @@
 import { getYeelights } from '../utils/get-yeelights.js'
 import inquirer from 'inquirer'
 import type { Light } from '../types/yeelight.js'
+import { throwError, throwMsg } from '../utils/throw-msg.js'
 
 let bulbIp: string
 let bulbName: string
@@ -20,7 +21,7 @@ const questions = [
 ]
 
 const searchBulb = () => {
-  console.log(`Looking for bulb with ${bulbIp} ip ...`)
+  throwMsg(`Looking for bulb with ${bulbIp} ip ...`)
   const resultBulb = bulbs.find(
     (bulb) => bulb.address === `yeelight://${bulbIp}:55443`
   )
@@ -28,21 +29,21 @@ const searchBulb = () => {
   if (resultBulb) {
     setBulbName(resultBulb)
   } else {
-    console.error(`The bulb with ${bulbIp} IP does not appear in network.`)
+    throwError(`The bulb with ${bulbIp} IP does not appear in network.`)
   }
 }
 
 const setBulbName = (bulb) => {
   bulb.set_name(bulbName)
-  console.log('The bulb name has been set!')
+  throwMsg('The bulb name has been set!')
 }
 
-console.log('Looking for bulbs in your network ...')
+throwMsg('Looking for bulbs in your network ...')
 
 void (async () => {
   try {
     bulbs = await getYeelights()
-    console.log('Discovered Yeelights:', bulbs.length)
+    throwMsg(`Discovered Yeelights: ${bulbs.length}`)
 
     inquirer.prompt(questions).then((answers: { ip: string; name: string }) => {
       bulbIp = answers.ip
@@ -51,6 +52,6 @@ void (async () => {
       process.exit()
     })
   } catch (error) {
-    console.error('Error discovering Yeelights:', error)
+    throwError(`Error discovering Yeelights: ${error}`)
   }
 })()

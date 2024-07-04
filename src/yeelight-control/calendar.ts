@@ -8,6 +8,7 @@ import {
   OAUTH_YOUR_REDIRECT_URL,
 } from '../constants/env.js'
 import { time } from '../utils/time.js'
+import { throwError } from '../utils/throw-msg.js'
 
 type Event = {
   start: { dateTime: string }
@@ -59,7 +60,7 @@ export const checkCalendarEvents = async () => {
 
     return { isOngoing, title, startDate, endDate }
   } catch (error) {
-    console.error('Error checking calendar events:', error)
+    throwError(`Error checking calendar events: ${error}`)
   }
 
   return { isOngoing: false }

@@ -8,6 +8,7 @@ import {
   OAUTH_CLIENT_SECRET,
   OAUTH_YOUR_REDIRECT_URL,
 } from '../constants/env.js'
+import { throwError, throwMsg } from '../utils/throw-msg.js'
 
 const app = express()
 const port = 3000
@@ -21,9 +22,9 @@ const oauth2Client: Auth.OAuth2Client = new OAuth2(
 
 const url = authUrl(oauth2Client)
 
-console.log('Opening a page to authorize application with google calendar.')
-console.log('Follow instructions displayed on a page.')
-console.log(url)
+throwMsg('Opening a page to authorize application with google calendar.')
+throwMsg('Follow instructions displayed on a page.')
+throwMsg(url)
 spawn('open', [url])
 
 app.get('/oauth2callback', (req: Request, res: Response) => {
@@ -33,9 +34,8 @@ app.get('/oauth2callback', (req: Request, res: Response) => {
     code,
     (err: Auth.gaxios.GaxiosError, token: Auth.Credentials) => {
       if (err) {
-        console.error(
-          'Error retrieving access token:',
-          err.response ? err.response.data : err
+        throwError(
+          `Error retrieving access token: ${err.response ? err.response.data : err}`
         )
         return res
           .status(400)
@@ -47,11 +47,11 @@ app.get('/oauth2callback', (req: Request, res: Response) => {
 
       oauth2Client.setCredentials(token)
 
-      console.log('\nAuthorization successful!')
-      console.log('Your tokens are:', {
-        access_token: token.access_token,
-        refresh_token: token.refresh_token,
-      })
+      throwMsg('\nAuthorization successful!')
+      throwMsg(`Your tokens are: {
+        access_token: ${token.access_token},
+        refresh_token: ${token.refresh_token},
+      }`)
 
       res.send('Authorization successful! You can close this window.')
       process.exit(0)

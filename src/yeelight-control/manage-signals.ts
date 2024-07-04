@@ -1,7 +1,7 @@
 import type { Light } from '../types/yeelight.js'
 import { getYeelights } from '../utils/get-yeelights.js'
 import { YEELIGHT_BULB_NAME } from '../constants/env.js'
-import { throwMsg } from '../utils/throw-msg.js'
+import { throwError, throwMsg } from '../utils/throw-msg.js'
 import { getTime } from '../utils/time.js'
 import { checkCalendarEvents } from './calendar.js'
 
@@ -31,8 +31,8 @@ async function manageBulb() {
     signalBulb = bulbs.find(({ name }) => name === YEELIGHT_BULB_NAME)
 
     if (!signalBulb) {
-      console.error(`The bulb with name ${YEELIGHT_BULB_NAME} not found`)
-      console.error(`Check does it turned on`)
+      throwError(`The bulb with name ${YEELIGHT_BULB_NAME} not found`)
+      throwError(`Check does it turned on`)
       bulbs.forEach((b) => b.exit())
 
       return
@@ -40,8 +40,8 @@ async function manageBulb() {
 
     throwMsg(`the ${YEELIGHT_BULB_NAME} has been found`, true)
   } catch (error) {
-    console.error('Something went wrong while discovering bulbs')
-    console.error(error)
+    throwError('Something went wrong while discovering bulbs')
+    throwError(error)
   }
 }
 
