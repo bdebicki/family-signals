@@ -14,7 +14,6 @@ type Event = {
   start: { dateTime: string }
   end: { dateTime: string }
   status: 'confirmed' // 'rejected' | 'not accepted'
-  eventType: 'default' | 'outOfOffice' | 'workingLocation'
   summary: string
 }
 
@@ -39,8 +38,8 @@ export const checkCalendarEvents = async () => {
     const res = await calendar.events.list({
       calendarId: 'primary',
       timeMin: date,
-      maxResults: 1,
       eventTypes: ['default'],
+      maxResults: 1,
       singleEvents: true,
       orderBy: 'startTime',
     })
