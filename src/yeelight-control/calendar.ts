@@ -1,5 +1,5 @@
-import { google } from 'googleapis'
 import type { Auth } from 'googleapis'
+import { google } from 'googleapis'
 import {
   OAUTH_ACCESS_TOKEN,
   OAUTH_CLIENT_ID,
@@ -14,7 +14,7 @@ type Event = {
   start: { dateTime: string }
   end: { dateTime: string }
   status: 'confirmed' // 'rejected' | 'not accepted'
-  eventType: 'default' | 'outOfOffice'
+  eventType: 'default' | 'outOfOffice' | 'workingLocation'
   summary: string
 }
 
@@ -40,6 +40,7 @@ export const checkCalendarEvents = async () => {
       calendarId: 'primary',
       timeMin: date,
       maxResults: 1,
+      eventTypes: ['default'],
       singleEvents: true,
       orderBy: 'startTime',
     })
@@ -48,13 +49,11 @@ export const checkCalendarEvents = async () => {
       start: { dateTime: startDate },
       end: { dateTime: endDate },
       status,
-      eventType,
       summary: title,
     } = res.data.items[0] as Event
 
     const isOngoing =
       status === 'confirmed' &&
-      eventType === 'default' &&
       new Date(startDate).getTime() - minInMs < new Date(date).getTime() &&
       new Date(endDate).getTime() + minInMs > new Date(date).getTime()
 
