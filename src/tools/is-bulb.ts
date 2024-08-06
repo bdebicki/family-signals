@@ -15,7 +15,6 @@ void (async () => {
       : (msg = `There is no bulb called ${YEELIGHT_BULB_NAME}. Check does it is turned on or run npm run tool:name-bulb`)
   )
 
-  console.log('boczek')
   throwMsg(msg)
   return
 })()
