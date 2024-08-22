@@ -1,9 +1,11 @@
 import type { Light } from '../types/yeelight.js'
 import { getYeelights } from '../utils/get-yeelights.js'
+import { getMockedYeelights } from '../utils/mock-yeelights.js'
 import { YEELIGHT_BULB_NAME } from '../constants/env.js'
 import { throwError, throwMsg } from '../utils/throw-msg.js'
 import { getTime } from '../utils/time.js'
 import { checkCalendarEvents } from './calendar.js'
+import { isMocked } from '../utils/parameters.js'
 
 let signalBulb: Light
 
@@ -27,7 +29,9 @@ async function manageCalendar() {
 
 async function manageBulb() {
   try {
-    const bulbs: Array<Light> = await getYeelights()
+    const bulbs: Array<Light> = isMocked
+      ? await getMockedYeelights()
+      : await getYeelights()
     signalBulb = bulbs.find(({ name }) => name === YEELIGHT_BULB_NAME)
 
     if (!signalBulb) {
