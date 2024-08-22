@@ -17,8 +17,9 @@ Integrate yeelight bulb with google calendar or slack status.
    - OAUTH_CLIENT_ID - client id
    - OAUTH_CLIENT_SECRET - client secret
    and yeelight ip:
-   - YEELIGHT_IP - yeelight bulb in your local network
-2. run `npm run auth:calendar` to generate necessary tokens and authorize app with Google
+   - YEELIGHT_BULB_NAME - yeelight bulb name (the name, but name from api not the one you set in the application. if you dont know your bulb name run the `npm run tool:name-bulb`)
+2. run `npm run build` - to buld the dist files
+3. run `npm run tool:auth-calendar` to generate necessary tokens and authorize app with Google
 3. fill out .env file by generated OAuth tokens:
    - OAUTH_ACCESS_TOKEN - access_token
    - OAUTH_REFRESH_TOKEN - refrest_token
