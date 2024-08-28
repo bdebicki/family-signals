@@ -4,34 +4,25 @@ import type { Light } from '../types/yeelight.js'
 import { throwError, throwMsg } from './throw-msg.js'
 
 type Bulb = Light & EventEmitter
+type Bulbs = Array<Bulb>
+type BulbsCache = Array<Light>
 
-let bulbsCache: Array<Light> = []
+let bulbsCache: BulbsCache = []
 let isDiscovering = false
 
-export const getYeelights = async (): Promise<Array<Light>> => {
-  if (bulbsCache.length > 0) {
-    throwMsg('Using cached bulbs', true)
-    return bulbsCache
-  }
+const waitForDiscovery = (): Promise<void> =>
+  new Promise((resolve) => {
+    const interval = setInterval(() => {
+      if (!isDiscovering) {
+        clearInterval(interval)
+        resolve()
+      }
+    }, 500)
+  })
 
-  if (isDiscovering) {
-    throwMsg('Discovery in progress, please wait', true)
-
-    return new Promise((resolve) => {
-      const interval = setInterval(() => {
-        if (!isDiscovering) {
-          clearInterval(interval)
-          resolve(bulbsCache)
-        }
-      }, 500)
-    })
-  }
-
-  throwMsg('Discovering bulbs', true)
-  isDiscovering = true
-
-  return new Promise((resolve, reject) => {
-    const bulbs: Array<Bulb> = []
+const discoverBulbs = (): Promise<Bulbs> =>
+  new Promise((resolve, reject) => {
+    const bulbs: Bulbs = []
 
     Yeelight.discover((bulb: Bulb) => {
       bulbs.push(bulb)
@@ -42,19 +33,46 @@ export const getYeelights = async (): Promise<Array<Light>> => {
     })
 
     setTimeout(() => {
-      isDiscovering = false
-
       if (bulbs.length > 0) {
-        bulbsCache = bulbs
-
-        throwMsg(
-          `Discovered ${bulbs.length} bulb${bulbs.length !== 1 ? 's' : ''}`,
-          true
-        )
         resolve(bulbs)
       } else {
         reject(() => throwError('No bulbs found'))
       }
     }, 5000)
   })
+
+export const getYeelights = async (): Promise<BulbsCache> => {
+  if (bulbsCache.length > 0) {
+    throwMsg('Using cached bulbs', true)
+
+    return bulbsCache
+  }
+
+  if (isDiscovering) {
+    throwMsg('Discovery in progress, please wait', true)
+
+    await waitForDiscovery()
+
+    return bulbsCache
+  }
+
+  throwMsg('Discovering bulbs', true)
+  isDiscovering = true
+
+  try {
+    const bulbs = await discoverBulbs()
+    if (bulbs.length > 0) {
+      bulbsCache = bulbs
+
+      throwMsg(
+        `Discovered ${bulbs.length} bulb${bulbs.length !== 1 ? 's' : ''}`,
+        true
+      )
+    } else {
+      throwError('No bulbs found')
+    }
+    return bulbs
+  } finally {
+    isDiscovering = false
+  }
 }
