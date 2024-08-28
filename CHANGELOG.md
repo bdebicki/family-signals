@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.2.0]
+- [075f391](https://github.com/bdebicki/family-signals/commit/075f391e3d321d112c84650aa31f16ad540c93c5) improve stability of the script
+
 ## [0.1.0]
 - [bf45fa7](https://github.com/bdebicki/family-signals/commit/bf45fa72d1ad39cb9015320b75fab1575c055ffb) change mechanism
   - discover bulb only on the beginning

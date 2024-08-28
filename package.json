@@ -1,7 +1,7 @@
 {
   "name": "family-signals",
-  "version": "0.1.0",
-  "description": "Integrate yeelight bulb with google calendar or slack status.",
+  "version": "0.2.0",
+  "description": "Integrate Yeelight bulb with google calendar or slack status.",
   "type": "module",
   "engines": {
     "node": ">= 20.9 < 21"
