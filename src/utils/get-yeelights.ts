@@ -1,9 +1,10 @@
 import Yeelight from 'yeelight2'
 import { EventEmitter } from 'events'
 import type { Light } from '../types/yeelight.js'
-import { throwMsg } from './throw-msg.js'
+import { throwError, throwMsg } from './throw-msg.js'
 
-// Global variables to cache bulbs and track discovery state
+type Bulb = Light & EventEmitter
+
 let bulbsCache: Array<Light> = []
 let isDiscovering = false
 
@@ -15,6 +16,7 @@ export const getYeelights = async (): Promise<Array<Light>> => {
 
   if (isDiscovering) {
     throwMsg('Discovery in progress, please wait', true)
+
     return new Promise((resolve) => {
       const interval = setInterval(() => {
         if (!isDiscovering) {
@@ -29,28 +31,29 @@ export const getYeelights = async (): Promise<Array<Light>> => {
   isDiscovering = true
 
   return new Promise((resolve, reject) => {
-    const bulbs: Array<Light & EventEmitter> = [] // Make sure bulb is typed as EventEmitter
+    const bulbs: Array<Bulb> = []
 
-    // Start SSDP discovery for Yeelight bulbs
-    Yeelight.discover((bulb: Light & EventEmitter) => {
-      // Ensure bulb is an EventEmitter
+    Yeelight.discover((bulb: Bulb) => {
       bulbs.push(bulb)
-      bulb.on('error', (err) => {
-        console.error('Error with Yeelight:', err)
+
+      bulb.on('error', (error) => {
+        throwError(`Error with Yeelight: ${error}`)
       })
     })
 
     setTimeout(() => {
       isDiscovering = false
+
       if (bulbs.length > 0) {
         bulbsCache = bulbs
+
         throwMsg(
           `Discovered ${bulbs.length} bulb${bulbs.length !== 1 ? 's' : ''}`,
           true
         )
         resolve(bulbs)
       } else {
-        reject(new Error('No bulbs found'))
+        reject(() => throwError('No bulbs found'))
       }
     }, 5000)
   })

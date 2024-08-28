@@ -14,10 +14,12 @@ async function manageCalendar() {
 
   if (signalBulb) {
     if (isOngoing) {
-      throwMsg(`Ongoing meeting: ${title}`, true)
+      throwMsg(`Ongoing meeting: "${title}"`, true)
+
       await signalBulb.set_power('on').catch(console.error)
     } else {
       throwMsg(`Upcoming meeting: "${title}" at ${startDate}`, true)
+
       await signalBulb.set_power('off').catch(console.error)
     }
   }
@@ -51,5 +53,5 @@ export async function manageSignals() {
   throwMsg(`[${getTime()}] Manage signalisation`)
 
   await manageBulb()
-  manageCalendar()
+  await manageCalendar()
 }

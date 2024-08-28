@@ -7,8 +7,6 @@ void (async () => {
   const bulbsInLan: Array<Light> = await getYeelights()
   let msg: string = ''
 
-  console.log(bulbsInLan)
-
   bulbsInLan.find((bulb) =>
     bulb.name === YEELIGHT_BULB_NAME
       ? (msg = `The ${YEELIGHT_BULB_NAME} is available in network`)
