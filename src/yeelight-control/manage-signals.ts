@@ -12,18 +12,18 @@ let signalBulb: Light
 async function manageCalendar() {
   const { isOngoing, title, startDate } = await checkCalendarEvents()
 
-  if (!signalBulb) {
-    console.log('nie ma bulb szukam')
-    manageBulb()
-  } else {
+  if (signalBulb) {
     if (isOngoing) {
-      throwMsg(`ongoing meeting: ${title}`, true)
-      await signalBulb.set_power('on')
+      throwMsg(`Ongoing meeting: "${title}"`, true)
+
+      await signalBulb.set_power('on').catch(console.error)
     } else {
-      throwMsg(`upcoming meeting: "${title}" at ${startDate}`, true)
-      await signalBulb.set_power('off')
+      throwMsg(`Upcoming meeting: "${title}" at ${startDate}`, true)
+
+      await signalBulb.set_power('off').catch(console.error)
     }
   }
+
   setTimeout(manageCalendar, 10000)
 }
 
@@ -36,13 +36,13 @@ async function manageBulb() {
 
     if (!signalBulb) {
       throwError(`The bulb with name ${YEELIGHT_BULB_NAME} not found`)
-      throwError(`Check does it turned on`)
+      throwError(`Check if it is turned on`)
       bulbs.forEach((b) => b.exit())
 
       return
     }
 
-    throwMsg(`the ${YEELIGHT_BULB_NAME} has been found`, true)
+    throwMsg(`The ${YEELIGHT_BULB_NAME} has been found`, true)
   } catch (error) {
     throwError('Something went wrong while discovering bulbs')
     throwError(error)
@@ -52,6 +52,6 @@ async function manageBulb() {
 export async function manageSignals() {
   throwMsg(`[${getTime()}] Manage signalisation`)
 
-  manageBulb()
-  manageCalendar()
+  await manageBulb()
+  await manageCalendar()
 }

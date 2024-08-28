@@ -7,15 +7,13 @@ void (async () => {
   const bulbsInLan: Array<Light> = await getYeelights()
   let msg: string = ''
 
-  console.log(bulbsInLan)
-
   bulbsInLan.find((bulb) =>
     bulb.name === YEELIGHT_BULB_NAME
       ? (msg = `The ${YEELIGHT_BULB_NAME} is available in network`)
       : (msg = `There is no bulb called ${YEELIGHT_BULB_NAME}. Check does it is turned on or run npm run tool:name-bulb`)
   )
 
-  console.log('boczek')
   throwMsg(msg)
-  return
+
+  process.exit()
 })()
