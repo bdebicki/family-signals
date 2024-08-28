@@ -14,5 +14,6 @@ void (async () => {
   )
 
   throwMsg(msg)
-  return
+
+  process.exit()
 })()
