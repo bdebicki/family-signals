@@ -8,7 +8,8 @@ import {
   OAUTH_YOUR_REDIRECT_URL,
 } from '../constants/env.js'
 import { time } from '../utils/time.js'
-import { throwError } from '../utils/throw-msg.js'
+import { throwError, throwMsg } from '../utils/throw-msg.js'
+import { exec } from 'node:child_process'
 
 type Event = {
   start: { dateTime: string }
@@ -58,7 +59,27 @@ export const checkCalendarEvents = async () => {
 
     return { isOngoing, title, startDate, endDate }
   } catch (error) {
-    throwError(`Error checking calendar events: ${error}`)
+    const {
+      response: {
+        data: { error: type, error_description: msg },
+      },
+    } = error
+
+    if (type === 'invalid_grant') {
+      if (!OAUTH_ACCESS_TOKEN) {
+        throwError('You have to generate google calendar credential first.')
+      } else {
+        throwError('Your google calendar credentials are outdated.')
+      }
+
+      throwMsg('Opening a page to authorize application with google calendar.')
+      throwMsg('Follow instructions displayed on a page and run program again.')
+
+      exec('npm run tool:auth-calendar')
+      process.exit()
+    } else {
+      throwError(`Error checking calendar events: ${msg}`)
+    }
   }
 
   return { isOngoing: false }
