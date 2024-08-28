@@ -9,7 +9,10 @@ Integrate yeelight bulb with google calendar or slack status.
 - `lint` - lint source files and tests,
 - `prettier` - reformat files,
 - `test` - run tests,
-- `test:watch` - interactive watch mode to automatically re-run tests
+- `test:watch` - interactive watch mode to automatically re-run tests,
+- `tool:auth-calendar` - authenticate the calendar,
+- `tool:is-bulb` - check does the signalisation bulb is turned on, 
+- `tool:name-bulb` - set up name of the signalisation bulb
 
 ## How to start
 0. copy .env.template to .env file
@@ -20,13 +23,15 @@ Integrate yeelight bulb with google calendar or slack status.
    - YEELIGHT_BULB_NAME - yeelight bulb name (the name, but name from api not the one you set in the application. if you dont know your bulb name run the `npm run tool:name-bulb`)
 2. run `npm run build` - to buld the dist files
 3. run `npm run tool:auth-calendar` to generate necessary tokens and authorize app with Google
-3. fill out .env file by generated OAuth tokens:
+4. fill out .env file by generated OAuth tokens:
    - OAUTH_ACCESS_TOKEN - access_token
    - OAUTH_REFRESH_TOKEN - refrest_token
-4. run `npm run start` and start the script
+5. run `npm run start` and start the script
 
 ## Roadmap:
-- [ ] **1.0.0** - re-discover bulbs while bulb is turned off during calendar management
+- [ ] **1.0.0** 
+  - re-discover bulbs while bulb is turned off during calendar management
+  - restart script while user log in again to system
 - [ ] **2.0.0** - handle slack huddle
 - [ ] **2.1.0** - allow multiple google calendars
 - [ ] **2.2.0** - reconcile manual and automatic (huddle / calendar) toggle
