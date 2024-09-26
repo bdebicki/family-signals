@@ -2,43 +2,177 @@ import dgram from 'dgram'
 import net from 'net'
 import { EventEmitter } from 'events'
 
-export interface YeelightDevice extends EventEmitter {
-  name: string
-  address: string
-  port: number
-  id: string
-  model: string
-  firmware_version: string
-  supports: string[]
-  connected: boolean
-  power: string
-  bright: number
-  color_mode: number
-  ct: number
-  rgb: number
-  hue: number
-  sat: number
-  turnOn: () => Promise<void>
-  turnOff: () => Promise<void>
-  setColor: (red: number, green: number, blue: number) => Promise<void>
-  setName: (name: string) => Promise<void>
-  getName: () => Promise<string>
-  setBrightness: (brightness: number) => Promise<void>
-  close: () => void
+export class YeelightDevice extends EventEmitter {
+  private client: net.Socket | null = null
+  public connected = false
+  private reconnectAttempts = 0
+  private maxReconnectAttempts = 5
+  private reconnectInterval = 5000 // 5 seconds
+
+  constructor(
+    public readonly id: string,
+    public readonly address: string,
+    public readonly port: number,
+    public name: string,
+    public power: 'on' | 'off' = 'off',
+    public bright: number = 100,
+    public colorMode: number = 1,
+    public ct: number = 4000,
+    public rgb: number = 16777215,
+    public hue: number = 0,
+    public sat: number = 0
+  ) {
+    super()
+  }
+
+  connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.client = new net.Socket()
+
+      const connectHandler = () => {
+        this.connected = true
+        this.reconnectAttempts = 0
+        this.emit('connect')
+        resolve()
+      }
+
+      const errorHandler = (error: Error) => {
+        this.emit('error', error)
+        if (!this.connected) {
+          reject(error)
+        }
+      }
+
+      const closeHandler = () => {
+        this.connected = false
+        this.emit('disconnect')
+        this.reconnect()
+      }
+
+      this.client.on('connect', connectHandler)
+      this.client.on('error', errorHandler)
+      this.client.on('close', closeHandler)
+      this.client.on('data', (data) => this.handleResponse(data.toString()))
+
+      this.client.connect(this.port, this.address)
+    })
+  }
+
+  private reconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++
+      console.log(
+        `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+      )
+      setTimeout(() => this.connect(), this.reconnectInterval)
+    } else {
+      console.log('Max reconnection attempts reached. Giving up.')
+      this.emit('reconnect_failed')
+    }
+  }
+
+  private handleResponse(data: string) {
+    const responses = data.split('\r\n').filter((line) => line.trim() !== '')
+    for (const response of responses) {
+      try {
+        const parsedResponse = JSON.parse(response)
+        if (parsedResponse.method === 'props') {
+          Object.assign(this, parsedResponse.params)
+          this.emit('update', parsedResponse.params)
+        }
+        this.emit('response', parsedResponse)
+      } catch (error) {
+        console.error('Error parsing response:', error)
+      }
+    }
+  }
+
+  async sendCommand(method: string, params: any[]): Promise<any> {
+    if (!this.connected || !this.client) {
+      throw new Error('Device not connected')
+    }
+
+    return new Promise((resolve, reject) => {
+      const id = Math.floor(Math.random() * 10000)
+      const command = JSON.stringify({ id, method, params }) + '\r\n'
+
+      const timeout = setTimeout(() => {
+        this.removeListener('response', responseHandler)
+        reject(new Error('Command timeout'))
+      }, 5000)
+
+      const responseHandler = (response: any) => {
+        if (response.id === id) {
+          clearTimeout(timeout)
+          this.removeListener('response', responseHandler)
+          if (response.error) {
+            reject(new Error(response.error.message))
+          } else {
+            resolve(response.result)
+          }
+        }
+      }
+
+      this.on('response', responseHandler)
+      this.client.write(command, (error) => {
+        if (error) {
+          clearTimeout(timeout)
+          this.removeListener('response', responseHandler)
+          reject(error)
+        }
+      })
+    })
+  }
+
+  // Device control methods
+  async turnOn(): Promise<void> {
+    await this.sendCommand('set_power', ['on', 'smooth', 500])
+  }
+
+  async turnOff(): Promise<void> {
+    await this.sendCommand('set_power', ['off', 'smooth', 500])
+  }
+
+  async setColor(red: number, green: number, blue: number): Promise<void> {
+    const rgb = (red << 16) | (green << 8) | blue
+    await this.sendCommand('set_rgb', [rgb, 'smooth', 500])
+  }
+
+  async setBrightness(brightness: number): Promise<void> {
+    await this.sendCommand('set_bright', [brightness, 'smooth', 500])
+  }
+
+  async setName(name: string): Promise<void> {
+    await this.sendCommand('set_name', [name])
+    this.name = name
+  }
+
+  async getName(): Promise<string> {
+    const result = await this.sendCommand('get_prop', ['name'])
+    return result[0]
+  }
+
+  close() {
+    if (this.client) {
+      this.client.destroy()
+      this.client = null
+    }
+    this.connected = false
+  }
 }
 
 export class YeelightController {
   private devices: Map<string, YeelightDevice> = new Map()
-  private socket: dgram.Socket
+  private discoverySocket: dgram.Socket
 
   constructor() {
-    this.socket = dgram.createSocket('udp4')
+    this.discoverySocket = dgram.createSocket('udp4')
   }
 
   async discoverDevices(timeout: number = 3000): Promise<YeelightDevice[]> {
     return new Promise((resolve) => {
-      this.socket.bind(() => {
-        this.socket.setBroadcast(true)
+      this.discoverySocket.bind(() => {
+        this.discoverySocket.setBroadcast(true)
         const message = Buffer.from(
           'M-SEARCH * HTTP/1.1\r\n' +
             'HOST: 239.255.255.250:1982\r\n' +
@@ -46,25 +180,36 @@ export class YeelightController {
             'ST: wifi_bulb\r\n'
         )
 
-        this.socket.send(message, 0, message.length, 1982, '239.255.255.250')
+        this.discoverySocket.send(
+          message,
+          0,
+          message.length,
+          1982,
+          '239.255.255.250'
+        )
 
-        this.socket.on('message', (msg) => {
-          const deviceInfo = this.parseDeviceInfo(msg.toString())
+        this.discoverySocket.on('message', (msg) => {
+          const deviceInfo = this.parseDiscoveryResponse(msg.toString())
           if (deviceInfo && !this.devices.has(deviceInfo.id)) {
-            this.devices.set(deviceInfo.id, deviceInfo)
-            this.connectToDevice(deviceInfo)
+            const device = new YeelightDevice(
+              deviceInfo.id,
+              deviceInfo.address,
+              deviceInfo.port,
+              deviceInfo.name
+            )
+            this.devices.set(device.id, device)
           }
         })
 
         setTimeout(() => {
-          this.socket.close()
+          this.discoverySocket.close()
           resolve(Array.from(this.devices.values()))
         }, timeout)
       })
     })
   }
 
-  private parseDeviceInfo(message: string): YeelightDevice | null {
+  private parseDiscoveryResponse(message: string): any {
     const headers = message.split('\r\n').reduce(
       (acc, line) => {
         const [key, value] = line.split(': ')
@@ -75,143 +220,43 @@ export class YeelightController {
     )
 
     if (headers.id && headers.location) {
-      const [address] = headers.location.split('//')[1].split(':')
-      const device: YeelightDevice = new EventEmitter() as YeelightDevice
-      device.id = headers.id
-      device.name = headers.name || ''
-      device.model = headers.model || ''
-      device.firmware_version = headers.fw_ver || ''
-      device.address = address
-      device.port = 55443
-      device.supports = headers.support ? headers.support.split(' ') : []
-      device.connected = false
-      device.power = 'off'
-      device.bright = 100
-      device.color_mode = 1
-      device.ct = 4000
-      device.rgb = 16777215
-      device.hue = 0
-      device.sat = 0
-
-      device.turnOn = () =>
-        this.sendCommand(device, 'set_power', ['on', 'smooth', 500])
-      device.turnOff = () =>
-        this.sendCommand(device, 'set_power', ['off', 'smooth', 500])
-      device.setColor = (red, green, blue) =>
-        this.sendCommand(device, 'set_rgb', [
-          red * 65536 + green * 256 + blue,
-          'smooth',
-          500,
-        ])
-      device.setName = (name) => this.sendCommand(device, 'set_name', [name])
-      device.getName = () =>
-        this.sendCommand(device, 'get_prop', ['name']).then(
-          (res) => res.result[0]
-        )
-      device.setBrightness = (brightness) =>
-        this.sendCommand(device, 'set_bright', [brightness, 'smooth', 500])
-
-      return device
+      const [address, port] = headers.location.split('//')[1].split(':')
+      return {
+        id: headers.id,
+        address: address,
+        port: parseInt(port, 10),
+        name: headers.name || '',
+      }
     }
     return null
   }
 
-  private connectToDevice(device: YeelightDevice) {
-    const client = new net.Socket()
-    let buffer = ''
+  async connectToDevice(deviceId: string): Promise<YeelightDevice> {
+    const device = this.devices.get(deviceId)
+    if (!device) {
+      throw new Error('Device not found')
+    }
 
-    client.connect(device.port, device.address, () => {
-      console.log(`Connected to ${device.address}:${device.port}`)
-      device.connected = true
-      device.emit('connect')
+    device.on('disconnect', () => {
+      console.log(`Device ${deviceId} disconnected. Attempting to reconnect...`)
     })
 
-    client.on('data', (data) => {
-      buffer += data.toString()
-      let newlineIndex
-      while ((newlineIndex = buffer.indexOf('\r\n')) !== -1) {
-        const message = buffer.slice(0, newlineIndex)
-        buffer = buffer.slice(newlineIndex + 2)
-        this.handleResponse(device, message)
-      }
-    })
-
-    client.on('error', (err) => {
-      console.error(
-        `Connection error for ${device.address}:${device.port}:`,
-        err.message
+    device.on('reconnect_failed', () => {
+      console.log(
+        `Failed to reconnect to device ${deviceId}. Removing from active devices.`
       )
-      device.connected = false
-      device.emit('error', err)
+      this.devices.delete(deviceId)
     })
 
-    client.on('close', () => {
-      console.log(`Connection closed for ${device.address}:${device.port}`)
-      device.connected = false
-      device.emit('disconnect')
-    })
-    ;(device as any).client = client
-    ;(device as any).queue = {}
-
-    device.close = () => {
-      if ((device as any).client) {
-        ;(device as any).client.end()
-        ;(device as any).client.destroy()
-      }
-    }
+    await device.connect()
+    return device
   }
 
-  private handleResponse(device: YeelightDevice, data: string) {
-    try {
-      const response = JSON.parse(data)
-      console.log('Otrzymano odpowiedź:', response)
-      if (response.method === 'props') {
-        Object.assign(device, response.params)
-        device.emit('update', response.params)
-      } else if (response.id && (device as any).queue[response.id]) {
-        ;(device as any).queue[response.id](response)
-        delete (device as any).queue[response.id]
-      }
-    } catch (err) {
-      console.error('Error parsing response:', err)
-    }
+  getDevice(deviceId: string): YeelightDevice | undefined {
+    return this.devices.get(deviceId)
   }
 
-  private sendCommand(
-    device: YeelightDevice,
-    method: string,
-    params: any[]
-  ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if (!device.connected) {
-        return reject(new Error('Device not connected'))
-      }
-
-      const id = Math.floor(Math.random() * 10000)
-      const command = JSON.stringify({ id, method, params }) + '\r\n'
-      console.log('Wysyłanie komendy:', command)
-      ;(device as any).queue[id] = (res: any) => {
-        if (res.error) {
-          reject(new Error(res.error.message))
-        } else {
-          resolve(res)
-        }
-      }
-      ;(device as any).client.write(command, (err: Error | null) => {
-        if (err) {
-          console.error('Błąd podczas wysyłania komendy:', err)
-          delete (device as any).queue[id]
-          reject(err)
-        }
-      })
-
-      // Dodajemy timeout
-      setTimeout(() => {
-        if ((device as any).queue[id]) {
-          delete (device as any).queue[id]
-          reject(new Error('Command timeout'))
-        }
-      }, 5000)
-    })
+  getAllDevices(): YeelightDevice[] {
+    return Array.from(this.devices.values())
   }
 }
