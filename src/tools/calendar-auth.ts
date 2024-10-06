@@ -53,7 +53,10 @@ app.get('/oauth2callback', (req: Request, res: Response) => {
         refresh_token: ${token.refresh_token},
       }`)
 
-      res.send('Authorization successful! You can close this window.')
+      res.send(`Authorization successful! You can close this window.
+      <br />Your tokens are:
+        <br />- access_token: ${token.access_token},
+        <br />- refresh_token: ${token.refresh_token},`)
       process.exit(0)
     }
   )
